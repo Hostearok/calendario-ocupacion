@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Calendario de Ocupación</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .fecha-actualizacion {
+            color: #666;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        
+        .mes-container {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            margin-bottom: 25px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .mes-container h2 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            margin: 0;
+            padding: 18px 25px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .info {
+            padding: 12px 25px;
+            background: rgba(79, 172, 254, 0.1);
+            color: #2c5aa0;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(79, 172, 254, 0.2);
+        }
+        
+        .tabla-wrapper {
+            overflow-x: auto;
+        }
+        
+        .calendario {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        .depto-header, .stats-header {
+            background: #495057;
+            color: white;
+            padding: 10px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 11px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .depto-header {
+            width: 180px;
+            text-align: left;
+            min-width: 180px;
+            position: sticky;
+            left: 0;
+        }
+        
+        .dia-header {
+            background: #e9ecef;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 10px;
+            min-width: 24px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .depto-nombre {
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-right: 2px solid #dee2e6;
+            font-size: 11px;
+            font-weight: 500;
+            width: 180px;
+            min-width: 180px;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            position: sticky;
+            left: 0;
+            color: #495057;
+        }
+        
+        .ocupado {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+            text-align: center;
+            padding: 8px 2px;
+            font-size: 12px;
+            border: 1px solid rgba(255, 65, 108, 0.3);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .ocupado:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(255, 65, 108, 0.4);
+        }
+        
+        .libre {
+            background: #f8f9fa;
+            text-align: center;
+            padding: 8px 2px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+        
+        .libre:hover {
+            background: #e9ecef;
+        }
+        
+        .porcentaje {
+            text-align: center;
+            padding: 10px 8px;
+            font-weight: 600;
+            font-size: 11px;
+            border-left: 2px solid #dee2e6;
+            min-width: 50px;
+        }
+        
+        .porcentaje.alta { background: #d4edda; color: #155724; }
+        .porcentaje.media { background: #fff3cd; color: #856404; }
+        .porcentaje.baja { background: #f8d7da; color: #721c24; }
+        
+        .leyenda {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 18px 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .leyenda-items {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .leyenda-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .color-box {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .ocupado-box { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+        .libre-box { background: #f8f9fa; border: 2px solid #e9ecef; }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header { padding: 20px 15px; }
+            .header h1 { font-size: 22px; }
+            .stats { gap: 15px; }
+            .stat-item { padding: 8px 15px; font-size: 12px; }
+            .depto-nombre { font-size: 10px; width: 150px; min-width: 150px; }
+            .depto-header { width: 150px; min-width: 150px; }
+            .dia-header { font-size: 9px; min-width: 20px; }
+            .ocupado, .libre { padding: 6px 1px; }
+        }
+        
+        .auto-refresh {
+            animation: pulse 2s infinite;
+            color: #28a745;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Calendario de Ocupación</h1>
+            <div class="stats">
+                <div class="stat-item">🏢 26 Departamentos</div>
+                <div class="stat-item">📅 7 Meses</div>
+                <div class="stat-item">📋 680 Reservas</div>
+            </div>
+            <div class="fecha-actualizacion">
+                <span class="auto-refresh">●</span> Actualizado: 14/07/2025, 14:27
+            </div>
+        </div>
+        
+        <div class="leyenda">
+            <div class="leyenda-items">
+                <div class="leyenda-item">
+                    <span class="color-box ocupado-box"></span>
+                    Ocupado
+                </div>
+                <div class="leyenda-item">
+                    <span class="color-box libre-box"></span>
+                    Libre
+                </div>
+            </div>
+        </div>
+        
+        
+      <div class="mes-container">
+        <h2>📅 Abril 2025</h2>
+        <div class="info">🏢 20 departamentos activos</div>
+        
+        <div class="tabla-wrapper">
+          <table class="calendario">
+            <thead>
+              <tr>
+                <th class="depto-header">Departamento</th><th class="dia-header">1</th><th class="dia-header">2</th><th class="dia-header">3</th><th class="dia-header">4</th><th class="dia-header">5</th><th class="dia-header">6</th><th class="dia-header">7</th><th class="dia-header">8</th><th class="dia-header">9</th><th class="dia-header">10</th><th class="dia-header">11</th><th class="dia-header">12</th><th class="dia-header">13</th><th class="dia-header">14</th><th class="dia-header">15</th><th class="dia-header">16</th><th class="dia-header">17</th><th class="dia-header">18</th><th class="dia-header">19</th><th class="dia-header">20</th><th class="dia-header">21</th><th class="dia-header">22</th><th class="dia-header">23</th><th class="dia-header">24</th><th class="dia-header">25</th><th class="dia-header">26</th><th class="dia-header">27</th><th class="dia-header">28</th><th class="dia-header">29</th><th class="dia-header">30</th><th class="stats-header">%</th></tr></thead><tbody>
+        <tr>
+          <td class="depto-nombre" title="2 Amb ~ San Nicolas ~ Central ~ Transporte cerca">2 Amb ~ San Nicolas ~ Central ~ Transpor...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">57%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 Ambientes ~ Belgrano ~ Piso 10 ~ Luminoso ~ 2bd">2 Ambientes ~ Belgrano ~ Piso 10 ~ Lumin...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">77%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 amb en Palermo ~ Centrico ~ Lavarropas ~ Sillon">2 amb en Palermo ~ Centrico ~ Lavarropas...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">100%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="3 Ambientes ~ Recoleta ~ Gran Patio ~ Lavarropas">3 Ambientes ~ Recoleta ~ Gran Patio ~ La...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">90%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="3 Amb~Belgrano~Luminoso~Lavarropa ~ Lavavajillas">3 Amb~Belgrano~Luminoso~Lavarropa ~ Lava...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">100%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Casa de Lujo ~ Parrilla ~ Pileta ~ Country ~ 8 pax">Casa de Lujo ~ Parrilla ~ Pileta ~ Count...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">10%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Centrico - Obelisco - 9 de Julio - Diseño moderno">Centrico - Obelisco - 9 de Julio - Diseñ...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje media">50%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento Almagro ~ Pileta ~ Parrilla ~ Amplio">Departamento Almagro ~ Pileta ~ Parrilla...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">13%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento Premium Palermo ~ Pileta ~ Lavarropas">Departamento Premium Palermo ~ Pileta ~ ...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje baja">37%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento con 2 pisos en V. Crespo~ Vista y Luz">Departamento con 2 pisos en V. Crespo~ V...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">33%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento en Almagro ~ Mucha luz ~ Gran Balcon">Departamento en Almagro ~ Mucha luz ~ Gr...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">73%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento ~ Palermo ~ Luminoso ~ Gran Balcon ~">Departamento ~ Palermo ~ Luminoso ~ Gran...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje alta">77%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Depto en Recoleta ~ Luminoso ~ Piso Alto ~ Cocina">Depto en Recoleta ~ Luminoso ~ Piso Alto...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">83%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Depto ~ Recoleta ~ Luminoso ~ Vista ~ Centrico">Depto ~ Recoleta ~ Luminoso ~ Vista ~ Ce...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje baja">27%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Dpto en Villa crespo ~ Terraza, Parrilla y Piscina">Dpto en Villa crespo ~ Terraza, Parrilla...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">53%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Loft Premium en Nordelta ~ Jacuzzi ~ Vista de lujo">Loft Premium en Nordelta ~ Jacuzzi ~ Vis...</td>
+          <td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">60%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Loft en Palermo ~ Lavarropas ~ Pileta ~ Luminoso">Loft en Palermo ~ Lavarropas ~ Pileta ~ ...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje baja">10%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Luminoso ~ Ubicación ideal ~ Balcón ~ Pileta ~ 9">Luminoso ~ Ubicación ideal ~ Balcón ~ Pi...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">23%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Moderno y Cálido | Recoleta, Ubicación Céntrica">Moderno y Cálido | Recoleta, Ubicación C...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje baja">27%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Palermo ~ 2 ambientes ~ Luminoso ~ Lavarropas">Palermo ~ 2 ambientes ~ Luminoso ~ Lavar...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">87%</td>
+        </tr></tbody></table></div></div>
+      <div class="mes-container">
+        <h2>📅 Mayo 2025</h2>
+        <div class="info">🏢 16 departamentos activos</div>
+        
+        <div class="tabla-wrapper">
+          <table class="calendario">
+            <thead>
+              <tr>
+                <th class="depto-header">Departamento</th><th class="dia-header">1</th><th class="dia-header">2</th><th class="dia-header">3</th><th class="dia-header">4</th><th class="dia-header">5</th><th class="dia-header">6</th><th class="dia-header">7</th><th class="dia-header">8</th><th class="dia-header">9</th><th class="dia-header">10</th><th class="dia-header">11</th><th class="dia-header">12</th><th class="dia-header">13</th><th class="dia-header">14</th><th class="dia-header">15</th><th class="dia-header">16</th><th class="dia-header">17</th><th class="dia-header">18</th><th class="dia-header">19</th><th class="dia-header">20</th><th class="dia-header">21</th><th class="dia-header">22</th><th class="dia-header">23</th><th class="dia-header">24</th><th class="dia-header">25</th><th class="dia-header">26</th><th class="dia-header">27</th><th class="dia-header">28</th><th class="dia-header">29</th><th class="dia-header">30</th><th class="dia-header">31</th><th class="stats-header">%</th></tr></thead><tbody>
+        <tr>
+          <td class="depto-nombre" title="2 Amb ~ San Nicolas ~ Central ~ Transporte cerca">2 Amb ~ San Nicolas ~ Central ~ Transpor...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">100%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 Ambientes ~ Belgrano ~ Piso 10 ~ Luminoso ~ 2bd">2 Ambientes ~ Belgrano ~ Piso 10 ~ Lumin...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">94%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 amb ~ Palermo ~ Amplio ~ Centrico ~ Balcon">2 amb ~ Palermo ~ Amplio ~ Centrico ~ Ba...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje baja">3%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="3 Ambientes ~ Recoleta ~ Gran Patio ~ Lavarropas">3 Ambientes ~ Recoleta ~ Gran Patio ~ La...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje media">61%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Centrico - Obelisco - 9 de Julio - Diseño moderno">Centrico - Obelisco - 9 de Julio - Diseñ...</td>
+          <td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">65%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento Premium Palermo ~ Pileta ~ Lavarropas">Departamento Premium Palermo ~ Pileta ~ ...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">100%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento con 2 pisos en V. Crespo~ Vista y Luz">Departamento con 2 pisos en V. Crespo~ V...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">6%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento en Almagro ~ Mucha luz ~ Gran Balcon">Departamento en Almagro ~ Mucha luz ~ Gr...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">100%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento ~ Palermo ~ Luminoso ~ Gran Balcon ~">Departamento ~ Palermo ~ Luminoso ~ Gran...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">97%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Depto en Recoleta ~ Luminoso ~ Piso Alto ~ Cocina">Depto en Recoleta ~ Luminoso ~ Piso Alto...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje media">58%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Depto ~ Recoleta ~ Luminoso ~ Vista ~ Centrico">Depto ~ Recoleta ~ Luminoso ~ Vista ~ Ce...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td>
+          <td class="porcentaje alta">74%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Dpto en Villa crespo ~ Terraza, Parrilla y Piscina">Dpto en Villa crespo ~ Terraza, Parrilla...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">48%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Loft en Villa Crespo ~ Parrilla ~ Piscina ~ Balcón">Loft en Villa Crespo ~ Parrilla ~ Piscin...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">100%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Luminoso ~ Ubicación ideal ~ Balcón ~ Pileta ~ 9">Luminoso ~ Ubicación ideal ~ Balcón ~ Pi...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">45%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Moderno y Cálido | Recoleta, Ubicación Céntrica">Moderno y Cálido | Recoleta, Ubicación C...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">39%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Palermo ~ 2 ambientes ~ Luminoso ~ Lavarropas">Palermo ~ 2 ambientes ~ Luminoso ~ Lavar...</td>
+          <td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">77%</td>
+        </tr></tbody></table></div></div>
+      <div class="mes-container">
+        <h2>📅 Junio 2025</h2>
+        <div class="info">🏢 17 departamentos activos</div>
+        
+        <div class="tabla-wrapper">
+          <table class="calendario">
+            <thead>
+              <tr>
+                <th class="depto-header">Departamento</th><th class="dia-header">1</th><th class="dia-header">2</th><th class="dia-header">3</th><th class="dia-header">4</th><th class="dia-header">5</th><th class="dia-header">6</th><th class="dia-header">7</th><th class="dia-header">8</th><th class="dia-header">9</th><th class="dia-header">10</th><th class="dia-header">11</th><th class="dia-header">12</th><th class="dia-header">13</th><th class="dia-header">14</th><th class="dia-header">15</th><th class="dia-header">16</th><th class="dia-header">17</th><th class="dia-header">18</th><th class="dia-header">19</th><th class="dia-header">20</th><th class="dia-header">21</th><th class="dia-header">22</th><th class="dia-header">23</th><th class="dia-header">24</th><th class="dia-header">25</th><th class="dia-header">26</th><th class="dia-header">27</th><th class="dia-header">28</th><th class="dia-header">29</th><th class="dia-header">30</th><th class="stats-header">%</th></tr></thead><tbody>
+        <tr>
+          <td class="depto-nombre" title="2 Amb ~ San Nicolas ~ Central ~ Transporte cerca">2 Amb ~ San Nicolas ~ Central ~ Transpor...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">63%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 Ambientes ~ Belgrano ~ Piso 10 ~ Luminoso ~ 2bd">2 Ambientes ~ Belgrano ~ Piso 10 ~ Lumin...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">97%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 amb en Palermo ~ Centrico ~ Lavarropas ~ Sillon">2 amb en Palermo ~ Centrico ~ Lavarropas...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">90%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 amb en Pto Madero ~ Gym ~ Cochera ~ Laundry">2 amb en Pto Madero ~ Gym ~ Cochera ~ La...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">13%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 amb ~ Palermo ~ Amplio ~ Centrico ~ Balcon">2 amb ~ Palermo ~ Amplio ~ Centrico ~ Ba...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">47%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Casa de Lujo ~ Parrilla ~ Pileta ~ Country ~ 8 pax">Casa de Lujo ~ Parrilla ~ Pileta ~ Count...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">10%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Centrico - Obelisco - 9 de Julio - Diseño moderno">Centrico - Obelisco - 9 de Julio - Diseñ...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">67%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento  ~ Gran Balcón ~ Mucha Luz~">Departamento  ~ Gran Balcón ~ Mucha Luz~</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">87%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento ~ Palermo ~ Luminoso ~ Gran Balcon ~">Departamento ~ Palermo ~ Luminoso ~ Gran...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td>
+          <td class="porcentaje alta">97%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Depto en Recoleta ~ Luminoso ~ Piso Alto ~ Cocina">Depto en Recoleta ~ Luminoso ~ Piso Alto...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">50%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Depto ~ Recoleta ~ Luminoso ~ Vista ~ Centrico">Depto ~ Recoleta ~ Luminoso ~ Vista ~ Ce...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">27%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Dpto en Villa crespo ~ Terraza, Parrilla y Piscina">Dpto en Villa crespo ~ Terraza, Parrilla...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">63%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Loft en Villa Crespo ~ Parrilla ~ Piscina ~ Balcón">Loft en Villa Crespo ~ Parrilla ~ Piscin...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">100%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Luminoso ~ Ubicación ideal ~ Balcón ~ Pileta ~ 9">Luminoso ~ Ubicación ideal ~ Balcón ~ Pi...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">73%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Moderno y Cálido | Recoleta, Ubicación Céntrica">Moderno y Cálido | Recoleta, Ubicación C...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje media">50%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Monoambiente ~ Diseño ~ Parrilla ~ Cowork ~ Pileta">Monoambiente ~ Diseño ~ Parrilla ~ Cowor...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">73%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Palermo ~ 2 ambientes ~ Luminoso ~ Lavarropas">Palermo ~ 2 ambientes ~ Luminoso ~ Lavar...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje alta">77%</td>
+        </tr></tbody></table></div></div>
+      <div class="mes-container">
+        <h2>📅 Julio 2025</h2>
+        <div class="info">🏢 17 departamentos activos</div>
+        
+        <div class="tabla-wrapper">
+          <table class="calendario">
+            <thead>
+              <tr>
+                <th class="depto-header">Departamento</th><th class="dia-header">1</th><th class="dia-header">2</th><th class="dia-header">3</th><th class="dia-header">4</th><th class="dia-header">5</th><th class="dia-header">6</th><th class="dia-header">7</th><th class="dia-header">8</th><th class="dia-header">9</th><th class="dia-header">10</th><th class="dia-header">11</th><th class="dia-header">12</th><th class="dia-header">13</th><th class="dia-header">14</th><th class="dia-header">15</th><th class="dia-header">16</th><th class="dia-header">17</th><th class="dia-header">18</th><th class="dia-header">19</th><th class="dia-header">20</th><th class="dia-header">21</th><th class="dia-header">22</th><th class="dia-header">23</th><th class="dia-header">24</th><th class="dia-header">25</th><th class="dia-header">26</th><th class="dia-header">27</th><th class="dia-header">28</th><th class="dia-header">29</th><th class="dia-header">30</th><th class="dia-header">31</th><th class="stats-header">%</th></tr></thead><tbody>
+        <tr>
+          <td class="depto-nombre" title="2 Amb ~ San Nicolas ~ Central ~ Transporte cerca">2 Amb ~ San Nicolas ~ Central ~ Transpor...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje alta">87%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 Ambientes ~ Belgrano ~ Piso 10 ~ Luminoso ~ 2bd">2 Ambientes ~ Belgrano ~ Piso 10 ~ Lumin...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">94%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 amb en Palermo ~ Centrico ~ Lavarropas ~ Sillon">2 amb en Palermo ~ Centrico ~ Lavarropas...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje media">48%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 amb en Pto Madero ~ Gym ~ Cochera ~ Laundry">2 amb en Pto Madero ~ Gym ~ Cochera ~ La...</td>
+          <td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">26%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="2 amb ~ Palermo ~ Amplio ~ Centrico ~ Balcon">2 amb ~ Palermo ~ Amplio ~ Centrico ~ Ba...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje media">52%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Casa de Lujo ~ Parrilla ~ Pileta ~ Country ~ 8 pax">Casa de Lujo ~ Parrilla ~ Pileta ~ Count...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">13%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Centrico - Obelisco - 9 de Julio - Diseño moderno">Centrico - Obelisco - 9 de Julio - Diseñ...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje media">52%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento  ~ Gran Balcón ~ Mucha Luz~">Departamento  ~ Gran Balcón ~ Mucha Luz~</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">100%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento Premium Palermo ~ Pileta ~ Lavarropas">Departamento Premium Palermo ~ Pileta ~ ...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">100%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento ~ Palermo ~ Luminoso ~ Gran Balcon ~">Departamento ~ Palermo ~ Luminoso ~ Gran...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje media">45%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Depto en Recoleta ~ Luminoso ~ Piso Alto ~ Cocina">Depto en Recoleta ~ Luminoso ~ Piso Alto...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje alta">77%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Loft en Villa Crespo ~ Parrilla ~ Piscina ~ Balcón">Loft en Villa Crespo ~ Parrilla ~ Piscin...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">100%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Luminoso ~ Ubicación ideal ~ Balcón ~ Pileta ~ 9">Luminoso ~ Ubicación ideal ~ Balcón ~ Pi...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td>
+          <td class="porcentaje alta">87%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Moderno y Cálido | Recoleta, Ubicación Céntrica">Moderno y Cálido | Recoleta, Ubicación C...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">26%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Monoambiente ~ Diseño ~ Parrilla ~ Cowork ~ Pileta">Monoambiente ~ Diseño ~ Parrilla ~ Cowor...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje media">45%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Palermo ~ 2 ambientes ~ Luminoso ~ Lavarropas">Palermo ~ 2 ambientes ~ Luminoso ~ Lavar...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje alta">71%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Quartier Puerto Retiro - Torre lujo - Gym - Pileta">Quartier Puerto Retiro - Torre lujo - Gy...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">23%</td>
+        </tr></tbody></table></div></div>
+      <div class="mes-container">
+        <h2>📅 Agosto 2025</h2>
+        <div class="info">🏢 5 departamentos activos</div>
+        
+        <div class="tabla-wrapper">
+          <table class="calendario">
+            <thead>
+              <tr>
+                <th class="depto-header">Departamento</th><th class="dia-header">1</th><th class="dia-header">2</th><th class="dia-header">3</th><th class="dia-header">4</th><th class="dia-header">5</th><th class="dia-header">6</th><th class="dia-header">7</th><th class="dia-header">8</th><th class="dia-header">9</th><th class="dia-header">10</th><th class="dia-header">11</th><th class="dia-header">12</th><th class="dia-header">13</th><th class="dia-header">14</th><th class="dia-header">15</th><th class="dia-header">16</th><th class="dia-header">17</th><th class="dia-header">18</th><th class="dia-header">19</th><th class="dia-header">20</th><th class="dia-header">21</th><th class="dia-header">22</th><th class="dia-header">23</th><th class="dia-header">24</th><th class="dia-header">25</th><th class="dia-header">26</th><th class="dia-header">27</th><th class="dia-header">28</th><th class="dia-header">29</th><th class="dia-header">30</th><th class="dia-header">31</th><th class="stats-header">%</th></tr></thead><tbody>
+        <tr>
+          <td class="depto-nombre" title="Centrico - Obelisco - 9 de Julio - Diseño moderno">Centrico - Obelisco - 9 de Julio - Diseñ...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje media">42%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Departamento ~ Palermo ~ Luminoso ~ Gran Balcon ~">Departamento ~ Palermo ~ Luminoso ~ Gran...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">10%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Dpto en Villa crespo ~ Terraza, Parrilla y Piscina">Dpto en Villa crespo ~ Terraza, Parrilla...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">39%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Luminoso ~ Ubicación ideal ~ Balcón ~ Pileta ~ 9">Luminoso ~ Ubicación ideal ~ Balcón ~ Pi...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje media">52%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Moderno y Cálido | Recoleta, Ubicación Céntrica">Moderno y Cálido | Recoleta, Ubicación C...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">10%</td>
+        </tr></tbody></table></div></div>
+      <div class="mes-container">
+        <h2>📅 Septiembre 2025</h2>
+        <div class="info">🏢 1 departamentos activos</div>
+        
+        <div class="tabla-wrapper">
+          <table class="calendario">
+            <thead>
+              <tr>
+                <th class="depto-header">Departamento</th><th class="dia-header">1</th><th class="dia-header">2</th><th class="dia-header">3</th><th class="dia-header">4</th><th class="dia-header">5</th><th class="dia-header">6</th><th class="dia-header">7</th><th class="dia-header">8</th><th class="dia-header">9</th><th class="dia-header">10</th><th class="dia-header">11</th><th class="dia-header">12</th><th class="dia-header">13</th><th class="dia-header">14</th><th class="dia-header">15</th><th class="dia-header">16</th><th class="dia-header">17</th><th class="dia-header">18</th><th class="dia-header">19</th><th class="dia-header">20</th><th class="dia-header">21</th><th class="dia-header">22</th><th class="dia-header">23</th><th class="dia-header">24</th><th class="dia-header">25</th><th class="dia-header">26</th><th class="dia-header">27</th><th class="dia-header">28</th><th class="dia-header">29</th><th class="dia-header">30</th><th class="stats-header">%</th></tr></thead><tbody>
+        <tr>
+          <td class="depto-nombre" title="Moderno y Cálido | Recoleta, Ubicación Céntrica">Moderno y Cálido | Recoleta, Ubicación C...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">10%</td>
+        </tr></tbody></table></div></div>
+      <div class="mes-container">
+        <h2>📅 Octubre 2025</h2>
+        <div class="info">🏢 2 departamentos activos</div>
+        
+        <div class="tabla-wrapper">
+          <table class="calendario">
+            <thead>
+              <tr>
+                <th class="depto-header">Departamento</th><th class="dia-header">1</th><th class="dia-header">2</th><th class="dia-header">3</th><th class="dia-header">4</th><th class="dia-header">5</th><th class="dia-header">6</th><th class="dia-header">7</th><th class="dia-header">8</th><th class="dia-header">9</th><th class="dia-header">10</th><th class="dia-header">11</th><th class="dia-header">12</th><th class="dia-header">13</th><th class="dia-header">14</th><th class="dia-header">15</th><th class="dia-header">16</th><th class="dia-header">17</th><th class="dia-header">18</th><th class="dia-header">19</th><th class="dia-header">20</th><th class="dia-header">21</th><th class="dia-header">22</th><th class="dia-header">23</th><th class="dia-header">24</th><th class="dia-header">25</th><th class="dia-header">26</th><th class="dia-header">27</th><th class="dia-header">28</th><th class="dia-header">29</th><th class="dia-header">30</th><th class="dia-header">31</th><th class="stats-header">%</th></tr></thead><tbody>
+        <tr>
+          <td class="depto-nombre" title="Departamento Premium Palermo ~ Pileta ~ Lavarropas">Departamento Premium Palermo ~ Pileta ~ ...</td>
+          <td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">35%</td>
+        </tr>
+        <tr>
+          <td class="depto-nombre" title="Dpto en Villa crespo ~ Terraza, Parrilla y Piscina">Dpto en Villa crespo ~ Terraza, Parrilla...</td>
+          <td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="ocupado" title="Ocupado">●</td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td><td class="libre" title="Libre"></td>
+          <td class="porcentaje baja">10%</td>
+        </tr></tbody></table></div></div>
+        
+        <div class="footer">
+            🤖 Generado automáticamente • Se actualiza cada vez que corre el flujo de n8n
+        </div>
+    </div>
+    
+    <script>
+        // Auto-refresh cada 5 minutos
+        setTimeout(() => {
+            location.reload();
+        }, 300000);
+        
+        // Mejorar tooltips
+        document.querySelectorAll('td[title]').forEach(el => {
+            el.addEventListener('mouseenter', function() {
+                if (this.title) {
+                    console.log(this.title);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
